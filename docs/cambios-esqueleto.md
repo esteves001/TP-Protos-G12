@@ -62,6 +62,16 @@ faltantes..."):
 - Socket pasivo toma dirección y puerto de `-l`/`-p` (antes solo el puerto
   posicional y `INADDR_ANY`).
 
-## Warnings corregidos
+## Warnings corregidos (gcc 14.2, `-std=c11 -pedantic -Wall -Wextra`)
 
-Ver sección siguiente, se completa en el punto 5 de la Etapa 0.
+Con `-D_GNU_SOURCE` fuera de `CFLAGS` (solo `-D_POSIX_C_SOURCE=200809L`)
+ningún símbolo dejó de compilar: no hace falta `_GNU_SOURCE`.
+
+| Archivo | Warning | Fix |
+|---|---|---|
+| `parser_utils.c:9` | `'ret' may be used uninitialized` en `parser_utils_strcmpi_event` (el `switch` no tiene `default`) | `const char *ret = "unknown";` |
+| `selector.c:52` | `unused parameter 'signal'` en `wake_handler` | `(void) signal;` |
+| `socks5nio.c:281` | `unused parameter 'state'` en `hello_read_init` | `(void) state;` |
+| `stm.h:48..82` | `'struct selector_key' declared inside parameter list` (aparece al sacar el global, ver arriba) | `struct selector_key;` forward |
+
+Los tests de la cátedra (`test/*_test.c`) compilan sin warnings sin cambios.

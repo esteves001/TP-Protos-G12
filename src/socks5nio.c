@@ -281,6 +281,8 @@ static void
 hello_read_init(const unsigned state, struct selector_key *key) {
     struct hello_st *d = &ATTACHMENT(key)->client.hello;
 
+    (void) state;
+
     d->rb                              = &(ATTACHMENT(key)->read_buffer);
     d->wb                              = &(ATTACHMENT(key)->write_buffer);
     d->method                          = SOCKS_HELLO_NO_ACCEPTABLE_METHODS;
