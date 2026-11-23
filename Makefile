@@ -4,11 +4,12 @@
 #   make          -> bin/socks5d y bin/client
 #   make test     -> compila y corre tests de libcheck (test/*_test.c)
 #   make debug    -> -O0 -g -fsanitize=address,undefined
+#                    (requiere `make clean` previo: los .o de `make` no llevan ASan)
 #   make clean
 
 CC      ?= cc
 CFLAGS  ?= -O2
-CFLAGS  += -std=c11 -pedantic -Wall -Wextra -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE
+CFLAGS  += -std=c11 -pedantic -Wall -Wextra -D_POSIX_C_SOURCE=200809L -MMD -MP
 LDFLAGS ?=
 LDLIBS  ?= -lpthread
 
@@ -41,6 +42,9 @@ TEST_BINS := $(patsubst $(TEST_DIR)/%.c,$(TEST_BIN)/%,$(TEST_SRCS))
 TESTS_SELF_CONTAINED := buffer_test selector_test
 CHECK_CFLAGS := $(shell pkg-config --cflags check 2>/dev/null)
 CHECK_LIBS   := $(shell pkg-config --libs check 2>/dev/null || echo -lcheck)
+
+# archivos de dependencias generados por -MMD (cambios en headers recompilan)
+DEPS := $(SRV_OBJS:.o=.d) $(CLI_OBJS:.o=.d) $(addsuffix .d,$(TEST_BINS))
 
 .PHONY: all clean test debug dirs
 
@@ -75,3 +79,5 @@ debug: all
 
 clean:
 	rm -rf $(BIN_DIR)
+
+-include $(DEPS)
