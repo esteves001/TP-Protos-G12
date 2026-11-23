@@ -10,14 +10,26 @@ Consigna de la cátedra: [`docs/consigna-20262-r0.txt`](docs/consigna-20262-r0.t
 ## Compilar
 
 ```sh
-make            # bin/socks5d y bin/client
-make test       # tests de libcheck (test/*_test.c)
-make debug      # -O0 -g -fsanitize=address,undefined
+make            # bin/socks5d (y bin/client cuando client/ tenga fuentes)
+make test       # compila y corre todos los tests de libcheck (test/*_test.c)
 make clean
+make clean && make debug   # -O0 -g -fsanitize=address,undefined (requiere clean previo)
 ```
+
+Flags: `-std=c11 -pedantic -Wall -Wextra -D_POSIX_C_SOURCE=200809L`. Compila sin warnings.
+Las dependencias entre `.c` y headers se generan solas (`-MMD -MP`).
 
 Dependencias (Ubuntu): `build-essential git valgrind check pkg-config curl netcat-openbsd iperf3`.
 Target: Linux. macOS no es target.
+
+## Verificar
+
+```sh
+make test                                   # tests unitarios (buffer, hello, netutils, parser, parser_utils, selector, stm)
+test/smoke.sh bin/socks5d 1080              # humo: hello 05 01 00 → 05 00; 05 01 02 → 05 FF; SIGTERM → exit 0
+test/smoke.sh bin/socks5d 1080 "valgrind --leak-check=full --error-exitcode=1"
+make clean && make debug && test/smoke.sh bin/socks5d 1080   # mismo humo con ASan/UBSan
+```
 
 ## Ejecutar
 
@@ -40,7 +52,8 @@ curl --socks5 127.0.0.1:1080 http://1.1.1.1                           # IP direc
 |---|---|
 | Servidor `socks5d` | `src/` |
 | Cliente del protocolo de admin | `client/` |
-| Tests libcheck | `test/` |
+| Tests libcheck y `smoke.sh` | `test/` |
+| Cambios hechos al esqueleto de la cátedra | `docs/cambios-esqueleto.md` |
 | Especificación protocolo de admin | `docs/protocolo-admin.txt` |
 | Informe | `docs/informe.pdf` |
 | Consigna de la cátedra | `docs/consigna-20262-r0.txt` |
