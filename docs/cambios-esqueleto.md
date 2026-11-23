@@ -77,6 +77,7 @@ ningún símbolo dejó de compilar: no hace falta `_GNU_SOURCE`.
 | `parser_utils.c:9` | `'ret' may be used uninitialized` en `parser_utils_strcmpi_event` (el `switch` no tiene `default`) | `const char *ret = "unknown";` |
 | `selector.c:52` | `unused parameter 'signal'` en `wake_handler` | `(void) signal;` |
 | `socks5nio.c:281` | `unused parameter 'state'` en `hello_read_init` | `(void) state;` |
+| `parser.c:63` | `comparison of integer expressions of different signedness` (`when` es `int`, `ANY` es `unsigned`; solo aparece con `-O0`, es decir en `make debug`) | cast `(unsigned) state[i].when == ANY` |
 | `stm.h:48..82` | `'struct selector_key' declared inside parameter list` (aparece al sacar el global, ver arriba) | `struct selector_key;` forward |
 
 Los tests de la cátedra (`test/*_test.c`) compilan sin warnings sin cambios.
