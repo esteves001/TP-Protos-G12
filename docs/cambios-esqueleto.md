@@ -61,6 +61,11 @@ faltantes..."):
 - `signal(SIGPIPE, SIG_IGN)` agregado antes del loop.
 - Socket pasivo toma dirección y puerto de `-l`/`-p` (antes solo el puerto
   posicional y `INADDR_ANY`).
+- Salida normal (SIGTERM/SIGINT): el esqueleto hacía `err_msg = "closing"`
+  al salir del loop, con lo que `finally` ejecutaba `perror("closing")`
+  ("Interrupted system call") y retornaba 1 aun cuando todo había ido bien.
+  Se eliminó ese bloque: la salida limpia retorna 0. Detectado por el smoke
+  test de la Etapa 0 (`test/smoke.sh`).
 
 ## Warnings corregidos (gcc 14.2, `-std=c11 -pedantic -Wall -Wextra`)
 

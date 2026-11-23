@@ -128,9 +128,9 @@ main(const int argc, char **argv) {
             goto finally;
         }
     }
-    if(err_msg == NULL) {
-        err_msg = "closing";
-    }
+    // salida normal por SIGTERM/SIGINT: err_msg queda en NULL y ret en 0.
+    // (el esqueleto seteaba err_msg = "closing" y terminaba con perror y
+    //  código 1, lo que rompía `valgrind --error-exitcode' y los scripts.)
 
     int ret = 0;
 finally:
