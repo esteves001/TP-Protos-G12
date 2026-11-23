@@ -1,0 +1,20 @@
+                Protocolo de Administración y Monitoreo del Proxy SOCKSv5
+                                   (borrador 0)
+
+Status: PENDIENTE. Este documento se escribe ANTES de implementar admin.c y client/
+(ver AGENTS.md, Etapa 5).
+
+Secciones a completar:
+
+1. Introducción y objetivos
+2. Terminología (RFC 2119)
+3. Transporte (TCP, puerto por defecto, codificación)
+4. Autenticación
+5. Formato de mensajes (request / response)
+6. Comandos
+   6.1 Métricas (conexiones históricas, concurrentes, bytes transferidos, ...)
+   6.2 Usuarios (listar, agregar, borrar, cambiar contraseña)
+   6.3 Configuración en caliente (tamaño de buffers, timeouts, ...)
+7. Códigos de respuesta y errores
+8. Ejemplos de sesión
+9. Consideraciones de seguridad
