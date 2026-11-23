@@ -34,7 +34,8 @@ struct state_machine {
     const struct state_definition *current;
 };
 
-struct selector_key *key;
+/** declaración forward: los handlers reciben la llave del selector */
+struct selector_key;
 
 /**
  * definición de un estado de la máquina de estados
