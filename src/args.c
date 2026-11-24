@@ -15,9 +15,9 @@ port(const char* s)
 
     if (end == s || '\0' != *end
         || ((LONG_MIN == sl || LONG_MAX == sl) && ERANGE == errno)
-        || sl < 0 || sl > USHRT_MAX)
+        || sl < 1 || sl > USHRT_MAX)
     {
-        fprintf(stderr, "port should in in the range of 1-65536: %s\n", s);
+        fprintf(stderr, "port should be in the range of 1-65535: %s\n", s);
         exit(1);
         return 1;
     }
@@ -46,12 +46,13 @@ static void
 version(void)
 {
     fprintf(stderr, "socks5v version 0.0\n"
-            "ITBA Protocolos de Comunicación 2025/1 -- Grupo X\n"
-            "AQUI VA LA LICENCIA\n");
+            "ITBA Protocolos de Comunicación 2026/2 -- Grupo 12\n"
+            "Basado en el esqueleto de Juan F. Codagnone (ITBA, 2017-2018).\n"
+            "Trabajo práctico de uso académico, sin licencia propia.\n");
 }
 
 static void
-usage(const char* progname)
+usage(const char* progname, const int status)
 {
     fprintf(stderr,
             "Usage: %s [OPTION]...\n"
@@ -62,11 +63,11 @@ usage(const char* progname)
             "   -p <SOCKS port>  Puerto entrante conexiones SOCKS.\n"
             "   -P <conf port>   Puerto entrante conexiones configuracion\n"
             "   -u <name>:<pass> Usuario y contraseña de usuario que puede usar el proxy. Hasta 10.\n"
-            "   -v               Imprime información sobre la versión versión y termina.\n"
+            "   -v               Imprime información sobre la versión y termina.\n"
 
             "\n",
             progname);
-    exit(1);
+    exit(status);
 }
 
 void
@@ -99,7 +100,7 @@ parse_args(const int argc, char** argv, struct socks5args* args)
         switch (c)
         {
         case 'h':
-            usage(argv[0]);
+            usage(argv[0], 0);
             break;
         case 'l':
             args->socks_addr = optarg;

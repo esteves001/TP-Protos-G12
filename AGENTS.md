@@ -66,10 +66,13 @@ https://claude.ai/artifact/QMrypgpZewyf7eTvTvWphU
 │   ├── log.c/h           registro de acceso
 │   └── admin.c/h         servidor del protocolo de administración
 ├── client/               cliente del protocolo de administración
-├── test/                 *_test.c (libcheck) y scripts de stress
+├── test/                 *_test.c (libcheck), tests.h (helpers cátedra) y scripts de stress
 ├── docs/
 │   ├── protocolo-admin.txt   especificación del protocolo de admin (estilo RFC)
-│   └── informe.pdf
+│   ├── informe.pdf
+│   ├── consigna-20262-r0.txt consigna de la cátedra (Internet-Draft, rev 0)
+│   ├── parser_utils_ejemplo.dot  grafo de ejemplo del esqueleto (era src/foo.dot)
+│   └── patches/              patches originales del esqueleto, ya aplicados con git am
 └── bin/                  binarios y objetos generados (ignorado por git)
 ```
 
@@ -87,6 +90,7 @@ make debug           # -O0 -g -fsanitize=address,undefined (si está definido)
 ulimit -n 4096
 ./bin/socks5d -p 1080 -P 8080 -u juan:1234
 ./bin/client -P 8080 ...
+test/smoke.sh bin/socks5d 1080 [valgrind]   # humo: hello 05 01 00 → 05 00, 05 01 02 → 05 FF, SIGTERM → 0
 
 # probar a mano
 curl --socks5-hostname juan:1234@127.0.0.1:1080 http://example.com   # manda el FQDN al proxy
@@ -97,8 +101,14 @@ nc 127.0.0.1 8080                                                     # protocol
 valgrind --leak-check=full --show-leak-kinds=all ./bin/socks5d
 ```
 
-Entorno de referencia: Ubuntu 25.04 en VirtualBox. Dependencias: `build-essential git valgrind check pkg-config curl netcat-openbsd iperf3`.
+Entorno de referencia: VM Ubuntu 26.04 LTS, **aarch64**, gcc 15.2.0, GNU Make 4.4.1, valgrind 3.26.0, check 0.15.2.
+Dependencias: `build-essential git valgrind check pkg-config curl netcat-openbsd iperf3 xxd`.
 El desarrollo se hace por SSH remoto sobre la VM; macOS no es target (faltan `MSG_NOSIGNAL`, etc.).
+
+- `make test` necesita libcheck (`check` + `pkg-config`); sin eso el link falla.
+- `make debug` requiere `make clean` antes: los `.o` de `make` no llevan ASan/UBSan y se mezclarían.
+- El `ulimit -n` de la VM es **524288**. El stress test tiene que dejar registrado con qué límite se corrió,
+  y probarse también con `ulimit -n 1024` y `ulimit -n 4096` (el techo de `FD_SETSIZE` es 1024, ver §7).
 
 ## 5. Arquitectura (lo que hay que tener en la cabeza para tocar cualquier cosa)
 
@@ -209,6 +219,18 @@ Métricas, tabla de usuarios y configuración se leen y escriben **solo** desde 
 - `stm.h` tiene un `struct selector_key *key;` global suelto. Eliminar.
 - `args.c` tiene `-N` (disectors) heredado de otro TP. Esperar el documento de parámetros de la cátedra.
 - `hello_process` solo acepta método `0x00`; hay que extenderlo para `0x02` según haya usuarios configurados.
+- `socks5nio.c` original **no compilaba**: tenía huecos (`…`) en el enum de estados, en los structs por estado,
+  en `struct socks5` y en la tabla `client_statbl`, y referenciaba headers inexistentes (`hello.h`, `request.h`,
+  `socks5.h`, `socks5nio.h`). En la Etapa 0 se crearon `socks5.h` (constantes), `socks5nio.h`, `hello.{h,c}` y
+  se completaron los huecos con lo mínimo (HELLO_READ/HELLO_WRITE/DONE/ERROR, pool, `socks5_new`); el resto de
+  los estados quedó como `TODO(etapa-1)`. Además `hello_process` no enviaba el `05 FF` antes de cerrar,
+  `d->method` quedaba sin inicializar y `main.c` salía con código 1 en la terminación normal. Todo documentado
+  en `docs/cambios-esqueleto.md`.
+- Los puntos de arriba marcados como "por corregir" (`F_GETFD`, global de `stm.h`, `listen(20)`) ya están
+  corregidos en la Etapa 0; `-N` en `args.c` y la escucha IPv6 siguen pendientes.
+- La VM de desarrollo es aarch64, pero la cátedra probablemente corrija en **x86_64**. Antes de la entrega hay
+  que compilar y correr `make test` + `test/smoke.sh` en x86_64 al menos una vez (p. ej. contenedor Docker
+  `ubuntu` amd64 o una VM x86).
 
 ## 8. Lo que un agente NO debe hacer
 
@@ -225,7 +247,7 @@ Métricas, tabla de usuarios y configuración se leen y escriben **solo** desde 
 
 Mantener esta sección al día. Marcar con `[x]` lo terminado.
 
-- [ ] Etapa 0: patches aplicados, Makefile, compila sin warnings, tests de la cátedra pasan, bug de `fcntl` corregido, `args` integrado en `main`.
+- [x] Etapa 0 (cerrada 2026-11-24, rama `etapa-0` → `main`): patches aplicados, Makefile con deps automáticas, compila sin warnings, 7 suites de libcheck al 100 % (incluye `hello_test`), humo `test/smoke.sh` ok bajo valgrind y ASan/UBSan, `fcntl` y `stm.h` corregidos, `args` integrado en `main`, `hello` implementado, `socks5nio.c` compila con TODOs de etapa 1.
 - [ ] Etapa 1: hello + request IPv4 + connecting + copy. Hito: `curl --socks5 127.0.0.1:1080 http://1.1.1.1`.
 - [ ] Etapa 2: IPv6, FQDN con thread, iteración de addrinfo, errno → REP, escucha IPv6.
 - [ ] Etapa 3: users + auth RFC 1929. Hito: `curl --socks5-hostname user:pass@...`.
