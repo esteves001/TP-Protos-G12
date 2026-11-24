@@ -26,7 +26,18 @@ Formato: archivo, qué se cambió, por qué, commit.
 
 ## args.c
 
-- `version()`: texto actualizado a "2026/2 -- Grupo 12". Etapa 0.
+- `version()`: texto actualizado a "2026/2 -- Grupo 12"; "AQUI VA LA
+  LICENCIA" reemplazado por la atribución al esqueleto de la cátedra y la
+  aclaración de uso académico sin licencia propia (decisión del grupo). Etapa 0.
+- `usage()` recibe el código de salida (`usage(progname, status)`): `-h`
+  termina con 0 (es ayuda, no error). Antes hacía `exit(1)` siempre, lo que
+  rompe scripts que chequean el código de salida. Los errores de argumentos
+  siguen saliendo con 1. Etapa 0.
+- `port()`: rechaza el puerto 0 (`sl < 1` en vez de `sl < 0`): el mensaje
+  decía rango 1-… pero 0 pasaba. Mensaje corregido: "should in in the range
+  of 1-65536" → "should be in the range of 1-65535" (65536 no entra en 16
+  bits). Etapa 0.
+- Ayuda de `-v`: "versión versión" → "versión". Etapa 0.
 
 ## socks5nio.c
 
