@@ -101,8 +101,14 @@ nc 127.0.0.1 8080                                                     # protocol
 valgrind --leak-check=full --show-leak-kinds=all ./bin/socks5d
 ```
 
-Entorno de referencia: Ubuntu 25.04 en VirtualBox. Dependencias: `build-essential git valgrind check pkg-config curl netcat-openbsd iperf3`.
+Entorno de referencia: VM Ubuntu 26.04 LTS, **aarch64**, gcc 15.2.0, GNU Make 4.4.1, valgrind 3.26.0, check 0.15.2.
+Dependencias: `build-essential git valgrind check pkg-config curl netcat-openbsd iperf3 xxd`.
 El desarrollo se hace por SSH remoto sobre la VM; macOS no es target (faltan `MSG_NOSIGNAL`, etc.).
+
+- `make test` necesita libcheck (`check` + `pkg-config`); sin eso el link falla.
+- `make debug` requiere `make clean` antes: los `.o` de `make` no llevan ASan/UBSan y se mezclarían.
+- El `ulimit -n` de la VM es **524288**. El stress test tiene que dejar registrado con qué límite se corrió,
+  y probarse también con `ulimit -n 1024` y `ulimit -n 4096` (el techo de `FD_SETSIZE` es 1024, ver §7).
 
 ## 5. Arquitectura (lo que hay que tener en la cabeza para tocar cualquier cosa)
 
@@ -222,6 +228,9 @@ Métricas, tabla de usuarios y configuración se leen y escriben **solo** desde 
   en `docs/cambios-esqueleto.md`.
 - Los puntos de arriba marcados como "por corregir" (`F_GETFD`, global de `stm.h`, `listen(20)`) ya están
   corregidos en la Etapa 0; `-N` en `args.c` y la escucha IPv6 siguen pendientes.
+- La VM de desarrollo es aarch64, pero la cátedra probablemente corrija en **x86_64**. Antes de la entrega hay
+  que compilar y correr `make test` + `test/smoke.sh` en x86_64 al menos una vez (p. ej. contenedor Docker
+  `ubuntu` amd64 o una VM x86).
 
 ## 8. Lo que un agente NO debe hacer
 
@@ -238,7 +247,7 @@ Métricas, tabla de usuarios y configuración se leen y escriben **solo** desde 
 
 Mantener esta sección al día. Marcar con `[x]` lo terminado.
 
-- [x] Etapa 0: patches aplicados, Makefile, compila sin warnings, tests de la cátedra pasan, bug de `fcntl` corregido, `args` integrado en `main`. (rama `etapa-0`; verificado en Ubuntu 25.04/gcc 14.2 con valgrind y ASan/UBSan; `test/smoke.sh`)
+- [x] Etapa 0 (cerrada 2026-11-24, rama `etapa-0` → `main`): patches aplicados, Makefile con deps automáticas, compila sin warnings, 7 suites de libcheck al 100 % (incluye `hello_test`), humo `test/smoke.sh` ok bajo valgrind y ASan/UBSan, `fcntl` y `stm.h` corregidos, `args` integrado en `main`, `hello` implementado, `socks5nio.c` compila con TODOs de etapa 1.
 - [ ] Etapa 1: hello + request IPv4 + connecting + copy. Hito: `curl --socks5 127.0.0.1:1080 http://1.1.1.1`.
 - [ ] Etapa 2: IPv6, FQDN con thread, iteración de addrinfo, errno → REP, escucha IPv6.
 - [ ] Etapa 3: users + auth RFC 1929. Hito: `curl --socks5-hostname user:pass@...`.
